@@ -6,7 +6,7 @@ import TelegramBot from 'node-telegram-bot-api';
 import DB from './db/db.js';
 import cors from 'cors';
 
-const HOSTURL = "http://localhost:3000";
+const HOSTURL = config.HOSTURL;
 const bot = new TelegramBot(config.token, { polling: true });
 const app = express();
 const port = 3000;
