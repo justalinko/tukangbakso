@@ -61,6 +61,17 @@ class DB{
         const result = table_data.filter(data => data.id == key);
         return result[0];
     }
+    findAll(table, key){
+        const table_data = this.getData(table);
+        const result = table_data.filter(data => data.id == key);
+        return result;
+    }
+
+    findMyLink(table, key){
+        const table_data = this.getData(table);
+        const result = table_data.filter(data => data.chatId == key);
+        return result;
+    }
 
 }
 

